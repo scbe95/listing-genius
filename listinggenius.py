@@ -7,19 +7,26 @@ st.set_page_config(page_title="ListingGenius AI", page_icon="🏠")
 # --- SIDEBAR: SETTINGS ---
 with st.sidebar:
     st.header("⚙️ Settings")
-    st.markdown("Get a free key at [console.groq.com/keys](https://console.groq.com/keys)")
     
-    # ASK FOR GROQ KEY
-    api_key = st.text_input("Groq API Key", type="password", help="Paste your Groq key here.")
-    
+    # --- THE NEW LOGIC STARTS HERE ---
+    # Check if the key is saved in Streamlit Cloud Secrets
+    if "GROQ_API_KEY" in st.secrets:
+        st.success("✅ API Key loaded from Cloud Secrets")
+        api_key = st.secrets["GROQ_API_KEY"]
+    else:
+        # If running locally (and you haven't set up local secrets), ask for it
+        st.info("💡 **Tip:** running locally? Paste key below.")
+        api_key = st.text_input("Groq API Key", type="password")
+    # --- END NEW LOGIC ---
+
     st.divider()
-    st.info("💡 **Note:** We are using the free Llama 3.1 model via Groq!")
+    st.info("Powered by Groq & Llama 3.1")
 
 # --- MAIN APP UI ---
 st.title("🏠 ListingGenius")
 st.subheader("Generate pro real estate descriptions in seconds.")
 
-# 1. Inputs (The "Form")
+# Inputs
 col1, col2 = st.columns(2)
 with col1:
     beds = st.selectbox("Bedrooms", ["Studio", "1", "2", "3", "4", "5+"])
@@ -35,23 +42,12 @@ features = st.multiselect(
 
 vibe = st.radio("Description Vibe", ["Professional", "Luxury/Elegant", "Cozy/Family-Friendly"], horizontal=True)
 
-# --- THE LOGIC ---
+# --- GENERATE BUTTON ---
 if st.button("✨ Generate Description", type="primary"):
     
     if not api_key:
-        # --- SIMULATION MODE ---
-        st.warning("⚠️ No API Key detected. Running in SIMULATION MODE.")
-        st.success("Here is a **SIMULATED** description (Paste Groq Key for real results):")
-        fake_response = (
-            f"Welcome to this stunning {beds}-bedroom, {baths}-bath home! "
-            f"Priced at ${price:,}, this {sqft} sqft gem features {', '.join(features)}. "
-            f"Written in a {vibe} tone, this property is perfect for buyers looking for value. "
-            "(Note: This is a placeholder. Enter a Groq key for unique descriptions!)"
-        )
-        st.text_area("Result:", value=fake_response, height=200)
-    
+        st.warning("⚠️ No API Key found. Please set it in Secrets or Sidebar.")
     else:
-        # --- REAL AI MODE (Groq / Llama 3.1) ---
         try:
             client = OpenAI(
                 base_url="https://api.groq.com/openai/v1",
@@ -66,28 +62,15 @@ if st.button("✨ Generate Description", type="primary"):
             Make it catchy, SEO-friendly for Zillow, and use about 150 words.
             """
             
-            with st.spinner("🤖 Llama 3.1 is writing (super fast)..."):
+            with st.spinner("🤖 AI is writing..."):
                 response = client.chat.completions.create(
-                    model="llama-3.1-8b-instant", # <--- UPDATED MODEL NAME
+                    model="llama-3.1-8b-instant",
                     messages=[{"role": "user", "content": prompt}]
                 )
                 result = response.choices[0].message.content
                 
-                st.success("✅ AI Description Generated!")
-                st.text_area("Copy this to Zillow:", value=result, height=250)
+                st.success("✅ Description Generated!")
+                st.text_area("Copy this:", value=result, height=250)
                 
         except Exception as e:
             st.error(f"❌ Error: {e}")
-
-# --- MONETIZATION (Placeholder) ---
-st.divider()
-st.markdown("""
-<center>
-    <small>Powered by Groq (Free Tier).</small><br>
-    <a href="#" style="text-decoration:none;">
-        <button style="background-color:#4CAF50; color:white; padding:8px 16px; border:none; border-radius:4px; cursor:pointer;">
-            🚀 Support this App
-        </button>
-    </a>
-</center>
-""", unsafe_allow_html=True)
