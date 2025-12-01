@@ -8,6 +8,11 @@ st.set_page_config(page_title="ListingGenius AI", page_icon="🏠", layout="cent
 with st.sidebar:
     st.header("⚙️ Settings")
     
+    # !!! DEBUG SPY (START) !!!
+    # This will print a list of secret keys to the screen so we can see if it's working.
+    st.warning(f"🕵️ DEBUG: Secrets found: {list(st.secrets.keys())}")
+    # !!! DEBUG SPY (END) !!!
+    
     # Initialize the key variable
     api_key = None
     
@@ -19,7 +24,7 @@ with st.sidebar:
     # 2. If not found in Secrets, ask for it manually
     else:
         st.warning("⚠️ No Secret found. Running in Manual Mode.")
-        api_key = st.text_input("Paste Groq API Key", type="password", help="Get a free key at console.groq.com")
+        api_key = st.text_input("Paste Groq API Key", type="password")
 
     st.divider()
     st.markdown("Powered by **Groq** & **Llama 3.1**")
@@ -58,4 +63,22 @@ if st.button("✨ Generate Description", type="primary"):
             )
             
             prompt = f"""
-            Write a {v
+            Write a {vibe} real estate listing description for a house with:
+            - {beds} beds, {baths} baths
+            - {sqft} sqft, priced at ${price}
+            - Features: {', '.join(features)}
+            Make it catchy, SEO-friendly for Zillow, and use about 150 words.
+            """
+            
+            with st.spinner("🤖 AI is writing..."):
+                response = client.chat.completions.create(
+                    model="llama-3.1-8b-instant",
+                    messages=[{"role": "user", "content": prompt}]
+                )
+                result = response.choices[0].message.content
+                
+                st.success("✅ Description Generated!")
+                st.text_area("Copy your description:", value=result, height=250)
+                
+        except Exception as e:
+            st.error(f"❌ Error: {e}")
