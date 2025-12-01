@@ -1,33 +1,35 @@
 import streamlit as st
 from openai import OpenAI
+import time
 
 # --- 1. CONFIGURATION ---
 st.set_page_config(
     page_title="ListingGenius Pro",
     page_icon="🏡",
-    layout="centered",
+    layout="wide",  # <--- CHANGED TO WIDE FOR SPLIT SCREEN
     initial_sidebar_state="expanded"
 )
 
 # --- 2. HIGH CONTRAST CSS ---
 st.markdown("""
     <style>
+    /* Main Background */
     .stApp { background: linear-gradient(to bottom, #000000, #0a192f); }
+    
+    /* Card Container */
     div.block-container {
-        background-color: #112240;
-        border: 1px solid #233554;
-        border-radius: 15px;
-        padding: 40px !important;
-        box-shadow: 0 10px 30px -10px rgba(2,12,27,0.7);
+        padding-top: 2rem; /* Less white space at top */
     }
-    h1 { color: #ccd6f6 !important; font-family: 'Helvetica', sans-serif; font-weight: 700; }
-    .subtitle { text-align: center; color: #8892b0; font-size: 16px; margin-bottom: 30px; }
+    
+    /* Input Styling */
     .stSelectbox div[data-baseweb="select"] > div, .stNumberInput input {
-        background-color: #0a192f !important; color: white !important; border: 1px solid #233554;
+        background-color: #112240 !important; color: white !important; border: 1px solid #233554;
     }
     .stSelectbox label, .stNumberInput label, .stMultiSelect label, .stSlider label {
         color: #64ffda !important; font-weight: 600;
     }
+    
+    /* Button Styles */
     div.stButton > button:first-child {
         background-color: transparent; color: #64ffda; border: 1px solid #64ffda;
         border-radius: 4px; height: 50px; width: 100%; font-weight: bold; margin-top: 10px;
@@ -35,23 +37,34 @@ st.markdown("""
     div.stButton > button:first-child:hover {
         background-color: rgba(100, 255, 218, 0.1); color: #64ffda;
     }
+
+    /* Output Box Styling */
+    .stTextArea textarea {
+        background-color: #112240 !important;
+        color: #e6f1ff !important;
+        border: 1px solid #233554;
+        font-family: "Courier New", Courier, monospace;
+    }
+
     #MainMenu, footer, header {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
 
 # --- 3. SESSION STATE ---
-# Initialize tracking variables
 if 'generations' not in st.session_state:
     st.session_state.generations = 0
 if 'last_result' not in st.session_state:
-    st.session_state.last_result = "" # Store the text here so it doesn't vanish
+    st.session_state.last_result = ""
 
 FREE_LIMIT = 3
 stripe_link = "https://buy.stripe.com/7sY5kCeBA5JJ8Uz5bh8og00"
 
 # --- 4. SIDEBAR ---
 with st.sidebar:
-    st.header("⚙️ Configuration")
+    # LOGO PLACEHOLDER IN SIDEBAR
+    st.image("https://cdn-icons-png.flaticon.com/512/609/609803.png", width=50) # Replace this URL later
+    st.header("ListingGenius")
+    
     if "GROQ_API_KEY" in st.secrets:
         st.success("✅ System Online")
         api_key = st.secrets["GROQ_API_KEY"]
@@ -67,64 +80,49 @@ with st.sidebar:
         st.error("🚫 Limit Reached")
     
     st.markdown("### 💎 Go Pro")
-    st.write("Unlimited access. Just $19/year.")
     st.link_button("🚀 Upgrade Pro ($19/yr)", stripe_link)
 
-# --- 5. MAIN INTERFACE ---
-st.markdown("<h1>🏡 ListingGenius <span style='color:#64ffda'>Pro</span></h1>", unsafe_allow_html=True)
-st.markdown("<div class='subtitle'>AI-Powered Real Estate Copywriter</div>", unsafe_allow_html=True)
+# --- 5. MAIN INTERFACE (SPLIT SCREEN) ---
 
-# Special Offer Button
-c1, c2, c3 = st.columns([1,2,1])
+# Top Header Area
+c1, c2 = st.columns([1, 8])
+with c1:
+    # MAIN LOGO (You can replace this URL with your own logo later)
+    st.image("https://cdn-icons-png.flaticon.com/512/609/609803.png", width=80) 
 with c2:
+    st.markdown("<h1 style='text-align: left; color: #ccd6f6;'>ListingGenius <span style='color:#64ffda'>Pro</span></h1>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #8892b0;'>AI-Powered Real Estate Copywriter</p>", unsafe_allow_html=True)
+
+st.write("")
+
+# --- SPLIT LAYOUT STARTS HERE ---
+left_col, right_col = st.columns([1, 1.2], gap="large") # Left is inputs, Right is result
+
+with left_col:
+    st.markdown("### 1. Property Details")
+    
+    # Inputs
+    c_a, c_b = st.columns(2)
+    with c_a:
+        beds = st.selectbox("🛏️ Bedrooms", ["Studio", "1", "2", "3", "4", "5+"])
+        baths = st.selectbox("🛁 Bathrooms", ["1", "1.5", "2", "2.5", "3+"])
+    with c_b:
+        sqft = st.number_input("📐 Square Feet", value=1500, step=50)
+        price = st.number_input("💲 Asking Price", value=450000, step=10000)
+
+    features = st.multiselect("✨ Highlights", ["Pool", "Modern Kitchen", "Hardwood Floors", "Mountain View", "Close to Schools", "Newly Renovated", "Large Backyard"])
+    vibe = st.select_slider("🎭 Tone", options=["Professional", "Balanced", "Luxury", "Cozy", "Urgent"])
+
+    # Mobile/Desktop Friendly Pay Button
     st.link_button("💎 Unlock Unlimited Access ($19/yr)", stripe_link, use_container_width=True)
 
-# Inputs
-col1, col2 = st.columns(2)
-with col1:
-    beds = st.selectbox("🛏️ Bedrooms", ["Studio", "1", "2", "3", "4", "5+"])
-    baths = st.selectbox("🛁 Bathrooms", ["1", "1.5", "2", "2.5", "3+"])
-with col2:
-    sqft = st.number_input("📐 Square Feet", value=1500, step=50)
-    price = st.number_input("💲 Asking Price", value=450000, step=10000)
-
-features = st.multiselect("✨ Property Highlights", ["Pool", "Modern Kitchen", "Hardwood Floors", "Mountain View", "Close to Schools", "Newly Renovated", "Large Backyard"])
-vibe = st.select_slider("🎭 Tone", options=["Professional", "Balanced", "Luxury", "Cozy", "Urgent"])
-
-# --- 6. LOGIC ---
-
-# Check limit
-if st.session_state.generations < FREE_LIMIT:
-    st.info(f"⚡ {FREE_LIMIT - st.session_state.generations} free generations left today.")
-    generate_btn = st.button("INITIALIZE GENERATOR")
-else:
-    st.error(f"❌ Daily limit reached.")
-    st.markdown(f"<div style='text-align:center'><a href='{stripe_link}' target='_blank' style='background-color:#FF4B4B; color:white; padding:15px 30px; border-radius:5px; text-decoration:none; font-weight:bold;'>🚀 UNLOCK NOW</a></div>", unsafe_allow_html=True)
+    # Logic Check
     generate_btn = False
-
-# Handle Generation
-if generate_btn:
-    if not api_key:
-        st.error("❌ API Key Missing.")
+    if st.session_state.generations < FREE_LIMIT:
+        st.info(f"⚡ {FREE_LIMIT - st.session_state.generations} free generations left.")
+        generate_btn = st.button("INITIALIZE GENERATOR")
     else:
-        try:
-            client = OpenAI(base_url="https://api.groq.com/openai/v1", api_key=api_key)
-            prompt = f"Write a {vibe} real estate description. {beds} bed, {baths} bath, {sqft} sqft, ${price}. Features: {features}."
-            
-            with st.spinner("Processing..."):
-                response = client.chat.completions.create(model="llama-3.1-8b-instant", messages=[{"role": "user", "content": prompt}])
-                result = response.choices[0].message.content
-                
-                # SAVE TO STATE & INCREMENT
-                st.session_state.last_result = result
-                st.session_state.generations += 1
-                st.rerun() # Refresh to update the counter
-                
-        except Exception as e:
-            st.error(f"❌ Error: {e}")
+        st.error(f"❌ Daily limit reached.")
 
-# --- 7. DISPLAY RESULT (PERSISTENT) ---
-# This runs every time the page loads, so the text stays visible even after the rerun
-if st.session_state.last_result:
-    st.markdown("### 📝 Output")
-    st.text_area("Result:", value=st.session_state.last_result, height=350)
+with right_col:
+    st.markdown("### 2. Generated Description")
