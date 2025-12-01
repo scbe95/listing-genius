@@ -4,27 +4,22 @@ from openai import OpenAI
 # --- PAGE CONFIGURATION ---
 st.set_page_config(page_title="ListingGenius AI", page_icon="🏠", layout="centered")
 
-# --- SIDEBAR & API KEY LOGIC ---
+# --- SIDEBAR: SETTINGS ---
 with st.sidebar:
     st.header("⚙️ Settings")
-    
-    # !!! DEBUG SPY (START) !!!
-    # This will print a list of secret keys to the screen so we can see if it's working.
-    st.warning(f"🕵️ DEBUG: Secrets found: {list(st.secrets.keys())}")
-    # !!! DEBUG SPY (END) !!!
     
     # Initialize the key variable
     api_key = None
     
-    # 1. Try to load from Streamlit Cloud Secrets
+    # --- NEW LOGIC: Check Secrets First ---
     if "GROQ_API_KEY" in st.secrets:
         st.success("✅ API Key loaded from Cloud Secrets")
         api_key = st.secrets["GROQ_API_KEY"]
-    
-    # 2. If not found in Secrets, ask for it manually
     else:
+        # If not found, ask for it manually
         st.warning("⚠️ No Secret found. Running in Manual Mode.")
         api_key = st.text_input("Paste Groq API Key", type="password")
+    # --------------------------------------
 
     st.divider()
     st.markdown("Powered by **Groq** & **Llama 3.1**")
@@ -56,7 +51,7 @@ if st.button("✨ Generate Description", type="primary"):
         st.error("❌ Please set your API Key in the Sidebar (or Cloud Secrets) to continue.")
     else:
         try:
-            # Connect to Groq using the OpenAI library
+            # Connect to Groq
             client = OpenAI(
                 base_url="https://api.groq.com/openai/v1",
                 api_key=api_key
