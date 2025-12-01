@@ -1,123 +1,130 @@
 import streamlit as st
 from openai import OpenAI
 
-# --- 1. PAGE CONFIGURATION ---
+# --- 1. CONFIGURATION ---
 st.set_page_config(
-    page_title="ListingGenius",
+    page_title="ListingGenius Pro",
     page_icon="🏡",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# --- 2. DARK MODE CSS (The New Look) ---
+# --- 2. PROFESSIONAL STYLING (CSS) ---
 st.markdown("""
     <style>
-    /* 1. Main Background - Dark Charcoal */
+    /* Main Background: Deep Blue-Black */
     .stApp {
         background-color: #0E1117;
     }
     
-    /* 2. Text Colors - Make them White/Grey */
-    h1 {
-        color: #FFFFFF !important;
-        text-align: center;
-        font-family: 'Helvetica', sans-serif;
-        font-weight: 700;
+    /* The "Card" Container */
+    .css-1r6slb0, .stContainer {
+        background-color: #161B22;
+        border: 1px solid #30363D;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
     
-    .subheader {
+    /* Headlines */
+    h1 {
+        color: #FFFFFF;
+        font-family: 'Inter', sans-serif;
+        font-weight: 800;
         text-align: center;
-        color: #A0A0A0 !important; /* Light Grey */
-        font-size: 18px;
+        letter-spacing: -1px;
+    }
+    
+    /* Sub-text */
+    .subtitle {
+        text-align: center;
+        color: #8B949E;
+        font-size: 16px;
+        margin-top: -10px;
         margin-bottom: 30px;
     }
     
-    /* 3. Input Labels - Make them readable on dark background */
-    .stSelectbox label, .stNumberInput label, .stMultiSelect label, .stSlider label {
-        color: #FAFAFA !important;
-        font-weight: 600;
+    /* Input Labels */
+    .stSelectbox label, .stNumberInput label, .stMultiSelect label {
+        color: #C9D1D9 !important;
+        font-weight: 500;
     }
     
-    /* 4. The "Generate" Button - Bright Green Accent */
+    /* The Generate Button (Gradient) */
     .stButton>button {
-        width: 100%;
-        background-color: #00D084; /* Green pops on dark */
-        color: #0e1117; /* Dark text on button */
+        background: linear-gradient(45deg, #238636, #2EA043);
+        color: white;
+        border: none;
         border-radius: 8px;
         height: 50px;
+        width: 100%;
         font-weight: bold;
-        font-size: 18px;
-        border: none;
-        transition: all 0.3s ease;
+        font-size: 16px;
+        margin-top: 10px;
+        transition: all 0.2s;
+    }
+    .stButton>button:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 12px rgba(46, 160, 67, 0.4);
     }
     
-    .stButton>button:hover {
-        background-color: #00b874;
-        box-shadow: 0px 4px 15px rgba(0, 208, 132, 0.4);
-        color: white;
-    }
-
-    /* 5. Hide the default Streamlit stuff */
+    /* Hide Streamlit Branding */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-    
-    /* 6. Success Message Box */
-    .stSuccess {
-        background-color: #1c251d !important;
-        color: #00D084 !important;
-    }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. SIDEBAR LOGIC ---
+# --- 3. SIDEBAR (Secrets) ---
 with st.sidebar:
-    st.header("⚙️ Settings")
+    st.header("⚙️ Configuration")
     api_key = None
     if "GROQ_API_KEY" in st.secrets:
-        st.success("✅ Connected to Groq Cloud")
+        st.success("✅ License Key Active")
         api_key = st.secrets["GROQ_API_KEY"]
     else:
-        st.warning("⚠️ Manual Mode")
-        api_key = st.text_input("Enter Groq Key", type="password")
-    st.divider()
-    st.markdown("© 2025 ListingGenius Inc.")
+        st.info("running locally? Paste key below.")
+        api_key = st.text_input("Groq API Key", type="password")
 
 # --- 4. MAIN INTERFACE ---
 
-# Title Section
+# Header
 st.markdown("<h1>🏡 ListingGenius</h1>", unsafe_allow_html=True)
-st.markdown("<div class='subheader'>Turn basic details into captivating real estate descriptions.</div>", unsafe_allow_html=True)
+st.markdown("<div class='subtitle'>AI-Powered Real Estate Copywriter</div>", unsafe_allow_html=True)
 
-st.write(" ") # Spacer
-
-# Input Form (Streamlit handles dark mode inputs automatically)
+# The "Control Panel" Card
 with st.container():
     col1, col2 = st.columns(2)
     with col1:
-        beds = st.selectbox("Bedrooms", ["Studio", "1", "2", "3", "4", "5+"])
-        baths = st.selectbox("Bathrooms", ["1", "1.5", "2", "2.5", "3+"])
+        beds = st.selectbox("🛏️ Bedrooms", ["Studio", "1", "2", "3", "4", "5+"])
+        baths = st.selectbox("🛁 Bathrooms", ["1", "1.5", "2", "2.5", "3+"])
     with col2:
-        sqft = st.number_input("Square Feet", value=1500, step=50)
-        price = st.number_input("Listing Price ($)", value=450000, step=10000)
+        sqft = st.number_input("📐 Square Feet", value=1500, step=50)
+        price = st.number_input("💲 Asking Price", value=450000, step=10000)
 
+    st.write("") # Spacer
+    
     features = st.multiselect(
-        "Key Highlights",
-        ["Pool", "Modern Kitchen", "Hardwood Floors", "Mountain View", "Close to Schools", "Newly Renovated", "Large Backyard", "Open Floor Plan"]
+        "✨ Property Highlights",
+        ["Pool", "Modern Kitchen", "Hardwood Floors", "Mountain View", "Close to Schools", "Newly Renovated", "Large Backyard", "Smart Home System"]
     )
+    
+    st.write("") # Spacer
 
     vibe = st.select_slider(
-        "Tone of Voice",
+        "🎭 Description Tone",
         options=["Professional", "Balanced", "Luxury", "Cozy", "Urgent"]
     )
-
-st.write(" ") # Spacer
-
-# --- 5. GENERATION LOGIC ---
-if st.button("✨ Write My Listing"):
     
+    st.write("") # Spacer
+    
+    # Generate Button
+    generate_btn = st.button("✨ GENERATE LISTING")
+
+# --- 5. OUTPUT SECTION ---
+if generate_btn:
     if not api_key:
-        st.error("❌ System Error: API Key missing. Please check settings.")
+        st.error("❌ API Key Missing. Please check Settings.")
     else:
         try:
             client = OpenAI(
@@ -125,29 +132,33 @@ if st.button("✨ Write My Listing"):
                 api_key=api_key
             )
             
+            # Prompt Engineering
             prompt = f"""
-            Act as a professional real estate copywriter. Write a {vibe} listing description for a home with:
+            Act as a luxury real estate copywriter. Write a {vibe} listing description for a home with:
             - {beds} beds, {baths} baths, {sqft} sqft
             - Price: ${price:,}
             - Highlights: {', '.join(features)}
             
-            Rules:
-            1. Create a catchy headline first.
-            2. Use engaging adjectives but avoid clichés.
-            3. Optimize for SEO.
-            4. Keep it under 200 words.
+            Structure:
+            1. HEADLINE: catchy and short (ALL CAPS).
+            2. BODY: Engaging narrative, focusing on lifestyle.
+            3. CLOSING: Call to action.
+            
+            No emojis in the text body. Keep it under 180 words.
             """
             
-            with st.spinner("Drafting description..."):
+            with st.spinner("Drafting high-converting copy..."):
                 response = client.chat.completions.create(
                     model="llama-3.1-8b-instant",
                     messages=[{"role": "user", "content": prompt}]
                 )
                 result = response.choices[0].message.content
                 
-                st.markdown("### 📝 Generated Description")
-                st.text_area("Copy your description:", value=result, height=300)
-                st.balloons()
+                # Result Display
+                st.write("")
+                st.markdown("### 📝 Your Listing Draft")
+                st.text_area("Copy to Zillow/MLS:", value=result, height=350)
+                st.success("Draft generated successfully!")
                 
         except Exception as e:
             st.error(f"❌ Error: {e}")
