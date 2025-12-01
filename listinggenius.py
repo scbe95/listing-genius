@@ -1,24 +1,23 @@
 import streamlit as st
 from openai import OpenAI
 
-# --- 1. PAGE CONFIGURATION ---
+# --- 1. CONFIGURATION ---
 st.set_page_config(
     page_title="ListingGenius Pro",
     page_icon="🏡",
     layout="centered",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 # --- 2. HIGH CONTRAST CSS ---
 st.markdown("""
     <style>
-    /* 1. Main Background: Subtle Gradient (Black to Deep Blue) */
+    /* Main Background: Subtle Gradient (Black to Deep Blue) */
     .stApp {
         background: linear-gradient(to bottom, #000000, #0a192f);
     }
     
-    /* 2. The "Glass" Card Container */
-    /* We target the specific div that wraps the main content */
+    /* The "Glass" Card Container */
     div.block-container {
         background-color: #112240; /* Lighter Navy */
         border: 1px solid #233554;
@@ -28,7 +27,7 @@ st.markdown("""
         box-shadow: 0 10px 30px -10px rgba(2,12,27,0.7);
     }
     
-    /* 3. Headlines */
+    /* Headlines */
     h1 {
         color: #ccd6f6 !important; /* White-ish Blue */
         text-align: center;
@@ -44,8 +43,7 @@ st.markdown("""
         margin-bottom: 30px;
     }
     
-    /* 4. Input Styling (Force Contrast) */
-    /* Force text inside inputs to be white */
+    /* Input Styling (Force Contrast) */
     .stSelectbox div[data-baseweb="select"] > div {
         background-color: #0a192f !important;
         color: white !important;
@@ -65,7 +63,7 @@ st.markdown("""
         letter-spacing: 0.5px;
     }
     
-    /* 5. The Button (Neon Green Accent) */
+    /* The Generate Button (Neon Green Accent) */
     .stButton>button {
         background-color: transparent;
         color: #64ffda;
@@ -84,6 +82,15 @@ st.markdown("""
         color: #64ffda;
         border: 1px solid #64ffda;
     }
+
+    /* Stripe Button Style (In Sidebar) */
+    [data-testid="stLinkButton"] {
+        background-color: #FF4B4B !important; /* Red/Orange for Attention */
+        color: white !important;
+        border: none !important;
+        font-weight: bold !important;
+        text-align: center !important;
+    }
     
     /* Hide Streamlit stuff */
     #MainMenu {visibility: hidden;}
@@ -92,9 +99,11 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. SIDEBAR ---
+# --- 3. SIDEBAR (BUSINESS LOGIC) ---
 with st.sidebar:
     st.header("⚙️ Configuration")
+    
+    # API Key Logic
     if "GROQ_API_KEY" in st.secrets:
         st.success("✅ System Online")
         api_key = st.secrets["GROQ_API_KEY"]
@@ -102,7 +111,20 @@ with st.sidebar:
         st.warning("⚠️ Manual Mode")
         api_key = st.text_input("Groq API Key", type="password")
 
-# --- 4. UI STRUCTURE ---
+    st.divider()
+
+    # --- STRIPE PAYMENT SECTION ---
+    st.markdown("### 💎 Go Pro")
+    st.write("Get 2 months free with the Annual Plan.")
+    
+    # YOUR ANNUAL STRIPE LINK
+    stripe_link = "https://buy.stripe.com/7sY5kCeBA5JJ8Uz5bh8og00"
+    
+    st.link_button("🚀 Upgrade Pro ($190/yr)", stripe_link)
+    st.caption("Secure payment via Stripe")
+
+
+# --- 4. MAIN INTERFACE ---
 
 st.markdown("<h1>🏡 ListingGenius <span style='color:#64ffda'>Pro</span></h1>", unsafe_allow_html=True)
 st.markdown("<div class='subtitle'>AI-Powered Real Estate Copywriter</div>", unsafe_allow_html=True)
