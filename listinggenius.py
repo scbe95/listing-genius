@@ -1,12 +1,11 @@
 import streamlit as st
 from openai import OpenAI
-import time
 
 # --- 1. CONFIGURATION ---
 st.set_page_config(
     page_title="ListingGenius Pro",
     page_icon="🏡",
-    layout="wide",  # <--- CHANGED TO WIDE FOR SPLIT SCREEN
+    layout="wide",
     initial_sidebar_state="expanded"
 )
 
@@ -17,15 +16,13 @@ st.markdown("""
     .stApp { background: linear-gradient(to bottom, #000000, #0a192f); }
     
     /* Card Container */
-    div.block-container {
-        padding-top: 2rem; /* Less white space at top */
-    }
+    div.block-container { padding-top: 2rem; }
     
     /* Input Styling */
-    .stSelectbox div[data-baseweb="select"] > div, .stNumberInput input {
+    .stSelectbox div[data-baseweb="select"] > div, .stNumberInput input, .stTextArea textarea {
         background-color: #112240 !important; color: white !important; border: 1px solid #233554;
     }
-    .stSelectbox label, .stNumberInput label, .stMultiSelect label, .stSlider label {
+    .stSelectbox label, .stNumberInput label, .stMultiSelect label, .stSlider label, .stTextArea label {
         color: #64ffda !important; font-weight: 600;
     }
     
@@ -38,11 +35,8 @@ st.markdown("""
         background-color: rgba(100, 255, 218, 0.1); color: #64ffda;
     }
 
-    /* Output Box Styling */
+    /* Output Box Styling (Right Side) */
     .stTextArea textarea {
-        background-color: #112240 !important;
-        color: #e6f1ff !important;
-        border: 1px solid #233554;
         font-family: "Courier New", Courier, monospace;
     }
 
@@ -61,8 +55,7 @@ stripe_link = "https://buy.stripe.com/7sY5kCeBA5JJ8Uz5bh8og00"
 
 # --- 4. SIDEBAR ---
 with st.sidebar:
-    # LOGO PLACEHOLDER IN SIDEBAR
-    st.image("https://cdn-icons-png.flaticon.com/512/609/609803.png", width=50) # Replace this URL later
+    st.image("https://cdn-icons-png.flaticon.com/512/609/609803.png", width=50)
     st.header("ListingGenius")
     
     if "GROQ_API_KEY" in st.secrets:
@@ -84,10 +77,8 @@ with st.sidebar:
 
 # --- 5. MAIN INTERFACE (SPLIT SCREEN) ---
 
-# Top Header Area
 c1, c2 = st.columns([1, 8])
 with c1:
-    # MAIN LOGO (You can replace this URL with your own logo later)
     st.image("https://cdn-icons-png.flaticon.com/512/609/609803.png", width=80) 
 with c2:
     st.markdown("<h1 style='text-align: left; color: #ccd6f6;'>ListingGenius <span style='color:#64ffda'>Pro</span></h1>", unsafe_allow_html=True)
@@ -95,13 +86,12 @@ with c2:
 
 st.write("")
 
-# --- SPLIT LAYOUT STARTS HERE ---
-left_col, right_col = st.columns([1, 1.2], gap="large") # Left is inputs, Right is result
+# --- SPLIT LAYOUT ---
+left_col, right_col = st.columns([1, 1.2], gap="large")
 
 with left_col:
     st.markdown("### 1. Property Details")
     
-    # Inputs
     c_a, c_b = st.columns(2)
     with c_a:
         beds = st.selectbox("🛏️ Bedrooms", ["Studio", "1", "2", "3", "4", "5+"])
@@ -111,9 +101,13 @@ with left_col:
         price = st.number_input("💲 Asking Price", value=450000, step=10000)
 
     features = st.multiselect("✨ Highlights", ["Pool", "Modern Kitchen", "Hardwood Floors", "Mountain View", "Close to Schools", "Newly Renovated", "Large Backyard"])
+    
+    # --- NEW: CUSTOM INPUT BOX ---
+    custom_details = st.text_area("📝 Additional Details (Optional)", placeholder="e.g. Historic fireplace, Tesla solar roof, walking distance to subway...")
+    # -----------------------------
+
     vibe = st.select_slider("🎭 Tone", options=["Professional", "Balanced", "Luxury", "Cozy", "Urgent"])
 
-    # Mobile/Desktop Friendly Pay Button
     st.link_button("💎 Unlock Unlimited Access ($19/yr)", stripe_link, use_container_width=True)
 
     # Logic Check
@@ -126,3 +120,53 @@ with left_col:
 
 with right_col:
     st.markdown("### 2. Generated Description")
+    
+    # OUTPUT LOGIC
+    if generate_btn:
+        if not api_key:
+            st.error("❌ API Key Missing.")
+        else:
+            try:
+                # 1. Setup the container
+                result_box = st.empty()
+                full_response = ""
+                
+                # 2. Call AI (Updated Prompt)
+                client = OpenAI(base_url="https://api.groq.com/openai/v1", api_key=api_key)
+                
+                # We add the custom details to the prompt here
+                prompt = f"""
+                Write a {vibe} real estate description. 
+                - {beds} bed, {baths} bath, {sqft} sqft, ${price}. 
+                - Features: {features}.
+                - Important Extra Details: {custom_details}
+                
+                No emojis in body. Keep it under 200 words.
+                """
+                
+                stream = client.chat.completions.create(
+                    model="llama-3.1-8b-instant",
+                    messages=[{"role": "user", "content": prompt}],
+                    stream=True
+                )
+                
+                # 3. Stream the text
+                for chunk in stream:
+                    content = chunk.choices[0].delta.content
+                    if content:
+                        full_response += content
+                        result_box.markdown(full_response)
+                
+                # 4. Finalize
+                st.session_state.last_result = full_response
+                st.session_state.generations += 1
+                st.rerun()
+                
+            except Exception as e:
+                st.error(f"❌ Error: {e}")
+
+    # DISPLAY SAVED RESULT (Persistent)
+    if st.session_state.last_result:
+        st.text_area("Copy your description:", value=st.session_state.last_result, height=400)
+    elif not generate_btn:
+        st.info("👈 Enter details on the left and hit Generate.")
