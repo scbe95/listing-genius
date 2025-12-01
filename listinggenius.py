@@ -1,7 +1,7 @@
 import streamlit as st
 from openai import OpenAI
 
-# --- 1. CONFIGURATION ---
+# --- 1. PAGE CONFIGURATION ---
 st.set_page_config(
     page_title="ListingGenius Pro",
     page_icon="🏡",
@@ -9,122 +9,133 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- 2. PROFESSIONAL STYLING (CSS) ---
+# --- 2. HIGH CONTRAST CSS ---
 st.markdown("""
     <style>
-    /* Main Background: Deep Blue-Black */
+    /* 1. Main Background: Subtle Gradient (Black to Deep Blue) */
     .stApp {
-        background-color: #0E1117;
+        background: linear-gradient(to bottom, #000000, #0a192f);
     }
     
-    /* The "Card" Container */
-    .css-1r6slb0, .stContainer {
-        background-color: #161B22;
-        border: 1px solid #30363D;
+    /* 2. The "Glass" Card Container */
+    /* We target the specific div that wraps the main content */
+    div.block-container {
+        background-color: #112240; /* Lighter Navy */
+        border: 1px solid #233554;
         border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        padding: 40px !important;
+        margin-top: 40px;
+        box-shadow: 0 10px 30px -10px rgba(2,12,27,0.7);
     }
     
-    /* Headlines */
+    /* 3. Headlines */
     h1 {
-        color: #FFFFFF;
-        font-family: 'Inter', sans-serif;
-        font-weight: 800;
+        color: #ccd6f6 !important; /* White-ish Blue */
         text-align: center;
-        letter-spacing: -1px;
+        font-family: 'Helvetica', sans-serif;
+        font-weight: 700;
+        margin-top: -20px;
     }
     
-    /* Sub-text */
     .subtitle {
         text-align: center;
-        color: #8B949E;
+        color: #8892b0;
         font-size: 16px;
-        margin-top: -10px;
         margin-bottom: 30px;
     }
     
-    /* Input Labels */
-    .stSelectbox label, .stNumberInput label, .stMultiSelect label {
-        color: #C9D1D9 !important;
-        font-weight: 500;
+    /* 4. Input Styling (Force Contrast) */
+    /* Force text inside inputs to be white */
+    .stSelectbox div[data-baseweb="select"] > div {
+        background-color: #0a192f !important;
+        color: white !important;
+        border: 1px solid #233554;
     }
     
-    /* The Generate Button (Gradient) */
+    .stNumberInput input {
+        background-color: #0a192f !important;
+        color: white !important;
+        border: 1px solid #233554;
+    }
+    
+    /* Labels */
+    .stSelectbox label, .stNumberInput label, .stMultiSelect label, .stSlider label {
+        color: #64ffda !important; /* Bright Teal Accent */
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    
+    /* 5. The Button (Neon Green Accent) */
     .stButton>button {
-        background: linear-gradient(45deg, #238636, #2EA043);
-        color: white;
-        border: none;
-        border-radius: 8px;
+        background-color: transparent;
+        color: #64ffda;
+        border: 1px solid #64ffda;
+        border-radius: 4px;
         height: 50px;
         width: 100%;
         font-weight: bold;
         font-size: 16px;
-        margin-top: 10px;
-        transition: all 0.2s;
+        margin-top: 20px;
+        transition: all 0.3s;
     }
     .stButton>button:hover {
-        transform: scale(1.02);
-        box-shadow: 0 4px 12px rgba(46, 160, 67, 0.4);
+        background-color: rgba(100, 255, 218, 0.1);
+        box-shadow: 0 0 15px rgba(100, 255, 218, 0.3);
+        color: #64ffda;
+        border: 1px solid #64ffda;
     }
     
-    /* Hide Streamlit Branding */
+    /* Hide Streamlit stuff */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. SIDEBAR (Secrets) ---
+# --- 3. SIDEBAR ---
 with st.sidebar:
     st.header("⚙️ Configuration")
-    api_key = None
     if "GROQ_API_KEY" in st.secrets:
-        st.success("✅ License Key Active")
+        st.success("✅ System Online")
         api_key = st.secrets["GROQ_API_KEY"]
     else:
-        st.info("running locally? Paste key below.")
+        st.warning("⚠️ Manual Mode")
         api_key = st.text_input("Groq API Key", type="password")
 
-# --- 4. MAIN INTERFACE ---
+# --- 4. UI STRUCTURE ---
 
-# Header
-st.markdown("<h1>🏡 ListingGenius</h1>", unsafe_allow_html=True)
+st.markdown("<h1>🏡 ListingGenius <span style='color:#64ffda'>Pro</span></h1>", unsafe_allow_html=True)
 st.markdown("<div class='subtitle'>AI-Powered Real Estate Copywriter</div>", unsafe_allow_html=True)
 
-# The "Control Panel" Card
-with st.container():
-    col1, col2 = st.columns(2)
-    with col1:
-        beds = st.selectbox("🛏️ Bedrooms", ["Studio", "1", "2", "3", "4", "5+"])
-        baths = st.selectbox("🛁 Bathrooms", ["1", "1.5", "2", "2.5", "3+"])
-    with col2:
-        sqft = st.number_input("📐 Square Feet", value=1500, step=50)
-        price = st.number_input("💲 Asking Price", value=450000, step=10000)
+# Inputs
+col1, col2 = st.columns(2)
+with col1:
+    beds = st.selectbox("🛏️ Bedrooms", ["Studio", "1", "2", "3", "4", "5+"])
+    baths = st.selectbox("🛁 Bathrooms", ["1", "1.5", "2", "2.5", "3+"])
+with col2:
+    sqft = st.number_input("📐 Square Feet", value=1500, step=50)
+    price = st.number_input("💲 Asking Price", value=450000, step=10000)
 
-    st.write("") # Spacer
-    
-    features = st.multiselect(
-        "✨ Property Highlights",
-        ["Pool", "Modern Kitchen", "Hardwood Floors", "Mountain View", "Close to Schools", "Newly Renovated", "Large Backyard", "Smart Home System"]
-    )
-    
-    st.write("") # Spacer
+st.write("") 
 
-    vibe = st.select_slider(
-        "🎭 Description Tone",
-        options=["Professional", "Balanced", "Luxury", "Cozy", "Urgent"]
-    )
-    
-    st.write("") # Spacer
-    
-    # Generate Button
-    generate_btn = st.button("✨ GENERATE LISTING")
+features = st.multiselect(
+    "✨ Property Highlights",
+    ["Pool", "Modern Kitchen", "Hardwood Floors", "Mountain View", "Close to Schools", "Newly Renovated", "Large Backyard", "Smart Home System"]
+)
 
-# --- 5. OUTPUT SECTION ---
+st.write("") 
+
+vibe = st.select_slider(
+    "🎭 Description Tone",
+    options=["Professional", "Balanced", "Luxury", "Cozy", "Urgent"]
+)
+
+generate_btn = st.button("INITIALIZE GENERATOR")
+
+# --- 5. LOGIC ---
 if generate_btn:
     if not api_key:
-        st.error("❌ API Key Missing. Please check Settings.")
+        st.error("❌ API Key Missing.")
     else:
         try:
             client = OpenAI(
@@ -132,33 +143,24 @@ if generate_btn:
                 api_key=api_key
             )
             
-            # Prompt Engineering
             prompt = f"""
             Act as a luxury real estate copywriter. Write a {vibe} listing description for a home with:
             - {beds} beds, {baths} baths, {sqft} sqft
             - Price: ${price:,}
             - Highlights: {', '.join(features)}
             
-            Structure:
-            1. HEADLINE: catchy and short (ALL CAPS).
-            2. BODY: Engaging narrative, focusing on lifestyle.
-            3. CLOSING: Call to action.
-            
-            No emojis in the text body. Keep it under 180 words.
+            Keep it under 180 words. High impact.
             """
             
-            with st.spinner("Drafting high-converting copy..."):
+            with st.spinner("Processing..."):
                 response = client.chat.completions.create(
                     model="llama-3.1-8b-instant",
                     messages=[{"role": "user", "content": prompt}]
                 )
                 result = response.choices[0].message.content
                 
-                # Result Display
-                st.write("")
-                st.markdown("### 📝 Your Listing Draft")
-                st.text_area("Copy to Zillow/MLS:", value=result, height=350)
-                st.success("Draft generated successfully!")
+                st.markdown("### 📝 Output")
+                st.text_area("Result:", value=result, height=350)
                 
         except Exception as e:
             st.error(f"❌ Error: {e}")
