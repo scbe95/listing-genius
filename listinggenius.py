@@ -12,14 +12,14 @@ st.set_page_config(
 # --- 2. HIGH CONTRAST CSS ---
 st.markdown("""
     <style>
-    /* Main Background: Subtle Gradient (Black to Deep Blue) */
+    /* Main Background */
     .stApp {
         background: linear-gradient(to bottom, #000000, #0a192f);
     }
     
-    /* The "Glass" Card Container */
+    /* Card Container */
     div.block-container {
-        background-color: #112240; /* Lighter Navy */
+        background-color: #112240;
         border: 1px solid #233554;
         border-radius: 15px;
         padding: 40px !important;
@@ -27,44 +27,19 @@ st.markdown("""
         box-shadow: 0 10px 30px -10px rgba(2,12,27,0.7);
     }
     
-    /* Headlines */
-    h1 {
-        color: #ccd6f6 !important; /* White-ish Blue */
-        text-align: center;
-        font-family: 'Helvetica', sans-serif;
-        font-weight: 700;
-        margin-top: -20px;
-    }
+    /* Typography */
+    h1 { color: #ccd6f6 !important; font-family: 'Helvetica', sans-serif; font-weight: 700; }
+    .subtitle { text-align: center; color: #8892b0; font-size: 16px; margin-bottom: 30px; }
     
-    .subtitle {
-        text-align: center;
-        color: #8892b0;
-        font-size: 16px;
-        margin-bottom: 30px;
-    }
-    
-    /* Input Styling (Force Contrast) */
-    .stSelectbox div[data-baseweb="select"] > div {
+    /* Inputs */
+    .stSelectbox div[data-baseweb="select"] > div, .stNumberInput input {
         background-color: #0a192f !important;
         color: white !important;
         border: 1px solid #233554;
     }
     
-    .stNumberInput input {
-        background-color: #0a192f !important;
-        color: white !important;
-        border: 1px solid #233554;
-    }
-    
-    /* Labels */
-    .stSelectbox label, .stNumberInput label, .stMultiSelect label, .stSlider label {
-        color: #64ffda !important; /* Bright Teal Accent */
-        font-weight: 600;
-        letter-spacing: 0.5px;
-    }
-    
-    /* The Generate Button (Neon Green Accent) */
-    .stButton>button {
+    /* Button Styles */
+    div.stButton > button:first-child {
         background-color: transparent;
         color: #64ffda;
         border: 1px solid #64ffda;
@@ -73,37 +48,29 @@ st.markdown("""
         width: 100%;
         font-weight: bold;
         font-size: 16px;
-        margin-top: 20px;
-        transition: all 0.3s;
+        margin-top: 10px;
     }
-    .stButton>button:hover {
+    div.stButton > button:first-child:hover {
         background-color: rgba(100, 255, 218, 0.1);
-        box-shadow: 0 0 15px rgba(100, 255, 218, 0.3);
-        color: #64ffda;
         border: 1px solid #64ffda;
+        color: #64ffda;
     }
 
-    /* Stripe Button Style (In Sidebar) */
-    [data-testid="stLinkButton"] {
-        background-color: #FF4B4B !important; /* Red/Orange for Attention */
-        color: white !important;
-        border: none !important;
-        font-weight: bold !important;
-        text-align: center !important;
-    }
-    
-    /* Hide Streamlit stuff */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    #MainMenu, footer, header {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. SIDEBAR (BUSINESS LOGIC) ---
+# --- 3. SESSION STATE (USAGE TRACKER) ---
+# This remembers the count as long as the user is on the page
+if 'generations' not in st.session_state:
+    st.session_state.generations = 0
+
+FREE_LIMIT = 3
+stripe_link = "https://buy.stripe.com/7sY5kCeBA5JJ8Uz5bh8og00"
+
+# --- 4. SIDEBAR ---
 with st.sidebar:
     st.header("⚙️ Configuration")
-    
-    # API Key Logic
     if "GROQ_API_KEY" in st.secrets:
         st.success("✅ System Online")
         api_key = st.secrets["GROQ_API_KEY"]
@@ -112,22 +79,29 @@ with st.sidebar:
         api_key = st.text_input("Groq API Key", type="password")
 
     st.divider()
-
-    # --- STRIPE PAYMENT SECTION ---
+    
+    # Show Usage in Sidebar
+    st.write(f"**Daily Usage:** {st.session_state.generations}/{FREE_LIMIT}")
+    st.progress(st.session_state.generations / FREE_LIMIT)
+    
+    if st.session_state.generations >= FREE_LIMIT:
+        st.error("🚫 Limit Reached")
+    
     st.markdown("### 💎 Go Pro")
-    st.write("Get 2 months free with the Annual Plan.")
-    
-    # YOUR ANNUAL STRIPE LINK
-    stripe_link = "https://buy.stripe.com/7sY5kCeBA5JJ8Uz5bh8og00"
-    
-    st.link_button("🚀 Upgrade Pro ($190/yr)", stripe_link)
-    st.caption("Secure payment via Stripe")
+    st.link_button("🚀 Upgrade ($190/yr)", stripe_link)
 
 
-# --- 4. MAIN INTERFACE ---
+# --- 5. MAIN INTERFACE ---
 
 st.markdown("<h1>🏡 ListingGenius <span style='color:#64ffda'>Pro</span></h1>", unsafe_allow_html=True)
 st.markdown("<div class='subtitle'>AI-Powered Real Estate Copywriter</div>", unsafe_allow_html=True)
+
+# Special Offer Button (Mobile Friendly)
+c1, c2, c3 = st.columns([1,2,1])
+with c2:
+    st.link_button("💎 Special Offer: Get 2 Months Free", stripe_link, use_container_width=True)
+
+st.write("") 
 
 # Inputs
 col1, col2 = st.columns(2)
@@ -142,37 +116,36 @@ st.write("")
 
 features = st.multiselect(
     "✨ Property Highlights",
-    ["Pool", "Modern Kitchen", "Hardwood Floors", "Mountain View", "Close to Schools", "Newly Renovated", "Large Backyard", "Smart Home System"]
+    ["Pool", "Modern Kitchen", "Hardwood Floors", "Mountain View", "Close to Schools", "Newly Renovated", "Large Backyard"]
 )
 
-st.write("") 
+vibe = st.select_slider("🎭 Tone", options=["Professional", "Balanced", "Luxury", "Cozy", "Urgent"])
 
-vibe = st.select_slider(
-    "🎭 Description Tone",
-    options=["Professional", "Balanced", "Luxury", "Cozy", "Urgent"]
-)
+# --- 6. LOGIC WITH LIMIT CHECK ---
 
-generate_btn = st.button("INITIALIZE GENERATOR")
+# Show the remaining count above the button
+if st.session_state.generations < FREE_LIMIT:
+    st.info(f"⚡ You have {FREE_LIMIT - st.session_state.generations} free generations left.")
+    generate_btn = st.button("INITIALIZE GENERATOR")
+else:
+    # If limit reached, DISABLE the button and show red alert
+    st.error(f"❌ You have used your {FREE_LIMIT} free credits for today.")
+    st.markdown(f"""
+        <div style="text-align:center;">
+            <a href="{stripe_link}" target="_blank" style="background-color:#FF4B4B; color:white; padding:15px 30px; border-radius:5px; text-decoration:none; font-weight:bold; font-size:20px;">
+                🚀 UNLOCK UNLIMITED ACCESS &rarr;
+            </a>
+        </div>
+    """, unsafe_allow_html=True)
+    generate_btn = False
 
-# --- 5. LOGIC ---
 if generate_btn:
     if not api_key:
         st.error("❌ API Key Missing.")
     else:
         try:
-            client = OpenAI(
-                base_url="https://api.groq.com/openai/v1",
-                api_key=api_key
-            )
-            
-            prompt = f"""
-            Act as a luxury real estate copywriter. Write a {vibe} listing description for a home with:
-            - {beds} beds, {baths} baths, {sqft} sqft
-            - Price: ${price:,}
-            - Highlights: {', '.join(features)}
-            
-            Keep it under 180 words. High impact.
-            """
+            client = OpenAI(base_url="https://api.groq.com/openai/v1", api_key=api_key)
+            prompt = f"Write a {vibe} real estate description. {beds} bed, {baths} bath, {sqft} sqft, ${price}. Features: {features}."
             
             with st.spinner("Processing..."):
                 response = client.chat.completions.create(
@@ -181,8 +154,14 @@ if generate_btn:
                 )
                 result = response.choices[0].message.content
                 
+                # INCREMENT COUNTER
+                st.session_state.generations += 1
+                
                 st.markdown("### 📝 Output")
                 st.text_area("Result:", value=result, height=350)
+                
+                # RERUN to update the counter visual immediately
+                st.rerun() 
                 
         except Exception as e:
             st.error(f"❌ Error: {e}")
