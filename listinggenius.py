@@ -1,102 +1,113 @@
 import streamlit as st
 from openai import OpenAI
 
-# --- 1. PAGE CONFIGURATION (Browser Tab) ---
+# --- 1. PAGE CONFIGURATION ---
 st.set_page_config(
-    page_title="ListingGenius | AI Real Estate",
+    page_title="ListingGenius",
     page_icon="🏡",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# --- 2. CUSTOM CSS ( The "Makeover" ) ---
-# This hides the default Streamlit style and adds your own "SaaS" look
+# --- 2. DARK MODE CSS (The New Look) ---
 st.markdown("""
     <style>
-    /* Background Color */
+    /* 1. Main Background - Dark Charcoal */
     .stApp {
-        background-color: #f8f9fa;
+        background-color: #0E1117;
     }
     
-    /* Center the Title and Style it */
+    /* 2. Text Colors - Make them White/Grey */
     h1 {
-        color: #2c3e50;
+        color: #FFFFFF !important;
         text-align: center;
         font-family: 'Helvetica', sans-serif;
         font-weight: 700;
-        margin-bottom: 10px;
     }
     
-    /* Style the Subheader */
     .subheader {
         text-align: center;
-        color: #7f8c8d;
+        color: #A0A0A0 !important; /* Light Grey */
         font-size: 18px;
         margin-bottom: 30px;
     }
     
-    /* Make the Button look like a "Pro" Call-to-Action */
+    /* 3. Input Labels - Make them readable on dark background */
+    .stSelectbox label, .stNumberInput label, .stMultiSelect label, .stSlider label {
+        color: #FAFAFA !important;
+        font-weight: 600;
+    }
+    
+    /* 4. The "Generate" Button - Bright Green Accent */
     .stButton>button {
         width: 100%;
-        background-color: #2980b9;
-        color: white;
+        background-color: #00D084; /* Green pops on dark */
+        color: #0e1117; /* Dark text on button */
         border-radius: 8px;
         height: 50px;
         font-weight: bold;
-        font-size: 20px;
+        font-size: 18px;
         border: none;
+        transition: all 0.3s ease;
     }
+    
     .stButton>button:hover {
-        background-color: #3498db;
+        background-color: #00b874;
+        box-shadow: 0px 4px 15px rgba(0, 208, 132, 0.4);
         color: white;
-        border: none;
     }
 
-    /* Hide the Streamlit Hamburger Menu and Footer */
+    /* 5. Hide the default Streamlit stuff */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
+    
+    /* 6. Success Message Box */
+    .stSuccess {
+        background-color: #1c251d !important;
+        color: #00D084 !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. SIDEBAR LOGIC (Hidden by default now) ---
+# --- 3. SIDEBAR LOGIC ---
 with st.sidebar:
     st.header("⚙️ Settings")
     api_key = None
     if "GROQ_API_KEY" in st.secrets:
-        st.success("✅ License Key Active")
+        st.success("✅ Connected to Groq Cloud")
         api_key = st.secrets["GROQ_API_KEY"]
     else:
         st.warning("⚠️ Manual Mode")
-        api_key = st.text_input("Enter Key", type="password")
+        api_key = st.text_input("Enter Groq Key", type="password")
     st.divider()
     st.markdown("© 2025 ListingGenius Inc.")
 
-# --- 4. THE MAIN UI ---
+# --- 4. MAIN INTERFACE ---
 
-# Hero Section (Centered)
+# Title Section
 st.markdown("<h1>🏡 ListingGenius</h1>", unsafe_allow_html=True)
-st.markdown("<div class='subheader'>Turn basic details into captivating real estate descriptions in seconds.</div>", unsafe_allow_html=True)
+st.markdown("<div class='subheader'>Turn basic details into captivating real estate descriptions.</div>", unsafe_allow_html=True)
 
-st.write("---") # A subtle divider line
+st.write(" ") # Spacer
 
-# The Input Form (Card Style)
+# Input Form (Streamlit handles dark mode inputs automatically)
 with st.container():
     col1, col2 = st.columns(2)
     with col1:
-        beds = st.selectbox("🛏️ Bedrooms", ["Studio", "1", "2", "3", "4", "5+"])
-        baths = st.selectbox("🛁 Bathrooms", ["1", "1.5", "2", "2.5", "3+"])
+        beds = st.selectbox("Bedrooms", ["Studio", "1", "2", "3", "4", "5+"])
+        baths = st.selectbox("Bathrooms", ["1", "1.5", "2", "2.5", "3+"])
     with col2:
-        sqft = st.number_input("📐 Square Feet", value=1500, step=50)
-        price = st.number_input("💲 Listing Price", value=450000, step=10000)
+        sqft = st.number_input("Square Feet", value=1500, step=50)
+        price = st.number_input("Listing Price ($)", value=450000, step=10000)
 
     features = st.multiselect(
-        "✨ Key Highlights",
+        "Key Highlights",
         ["Pool", "Modern Kitchen", "Hardwood Floors", "Mountain View", "Close to Schools", "Newly Renovated", "Large Backyard", "Open Floor Plan"]
     )
 
     vibe = st.select_slider(
-        "🎭 Tone of Voice",
+        "Tone of Voice",
         options=["Professional", "Balanced", "Luxury", "Cozy", "Urgent"]
     )
 
@@ -114,7 +125,6 @@ if st.button("✨ Write My Listing"):
                 api_key=api_key
             )
             
-            # More professional prompt
             prompt = f"""
             Act as a professional real estate copywriter. Write a {vibe} listing description for a home with:
             - {beds} beds, {baths} baths, {sqft} sqft
@@ -124,7 +134,7 @@ if st.button("✨ Write My Listing"):
             Rules:
             1. Create a catchy headline first.
             2. Use engaging adjectives but avoid clichés.
-            3. Optimize for SEO (Zillow/Redfin).
+            3. Optimize for SEO.
             4. Keep it under 200 words.
             """
             
@@ -135,10 +145,9 @@ if st.button("✨ Write My Listing"):
                 )
                 result = response.choices[0].message.content
                 
-                # Output Section
-                st.markdown("### 📝 Your Description")
-                st.text_area("Copy and paste this:", value=result, height=300)
-                st.balloons() # Fun effect on success
+                st.markdown("### 📝 Generated Description")
+                st.text_area("Copy your description:", value=result, height=300)
+                st.balloons()
                 
         except Exception as e:
             st.error(f"❌ Error: {e}")
