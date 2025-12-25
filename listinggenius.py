@@ -59,10 +59,10 @@ with st.sidebar:
     st.header("ListingGenius")
     
     if "GROQ_API_KEY" in st.secrets:
-        st.success("✅ System Online")
+        st.success(" System Online")
         api_key = st.secrets["GROQ_API_KEY"]
     else:
-        st.warning("⚠️ Manual Mode")
+        st.warning(" Manual Mode")
         api_key = st.text_input("Groq API Key", type="password")
 
     st.divider()
@@ -70,10 +70,10 @@ with st.sidebar:
     st.progress(st.session_state.generations / FREE_LIMIT)
     
     if st.session_state.generations >= FREE_LIMIT:
-        st.error("🚫 Limit Reached")
+        st.error(" Limit Reached")
     
-    st.markdown("### 💎 Go Pro")
-    st.link_button("🚀 Upgrade Pro ($19/yr)", stripe_link)
+    st.markdown("###  Go Pro")
+    st.link_button(" Upgrade Pro ($19/yr)", stripe_link)
 
 # --- 5. MAIN INTERFACE (SPLIT SCREEN) ---
 
@@ -108,7 +108,7 @@ with left_col:
 
     vibe = st.select_slider("🎭 Tone", options=["Professional", "Balanced", "Luxury", "Cozy", "Urgent"])
 
-    st.link_button("💎 Unlock Unlimited Access ($19/yr)", stripe_link, use_container_width=True)
+    st.link_button(" Unlock Unlimited Access ($19/yr)", stripe_link, use_container_width=True)
 
     # Logic Check
     generate_btn = False
@@ -116,7 +116,7 @@ with left_col:
         st.info(f"⚡ {FREE_LIMIT - st.session_state.generations} free generations left.")
         generate_btn = st.button("INITIALIZE GENERATOR")
     else:
-        st.error(f"❌ Daily limit reached.")
+        st.error(f" Daily limit reached.")
 
 with right_col:
     st.markdown("### 2. Generated Description")
